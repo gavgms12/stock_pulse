@@ -1,0 +1,97 @@
+services:
+  app:
+    build:
+      context: ../../  # Ajustado para apontar para a raiz do projeto
+      dockerfile: docker/Dockerfile
+    environment:
+      # Configurações do banco de dados
+      DATABASE_URL: "postgresql://admin:admin123@db:5432/stockpulse?schema=public"
+      POSTGRES_HOST: db
+      POSTGRES_PORT: 5432
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: stockpulse
+      
+      # Configurações da aplicação
+      NODE_ENV: development
+      PORT: 8080
+      SWAGGER_PORT: 3000
+      DEBUG_PORT: 5555
+      FRONTEND_PORT: 9877
+      
+      # Configurações de inicialização
+      APP_MODE: full
+      RUN_SEED: true
+      SWAGGER_ENABLED: true
+      FRONTEND_ENABLED: true
+      
+      # Configurações de logs
+      LOG_LEVEL: debug
+      
+      # JWT e segurança (adicione conforme necessário)
+      JWT_SECRET: stockpulse_jwt_secret_key_development
+      
+    ports:
+      - "3000:3000"   # Swagger UI port
+      #- "5555:5555"   # Debug port  
+      - "8080:8080"   # Backend API port
+      - "9877:9877"   # Frontend port
+    # depends_on:
+    #   db:
+    #     condition: service_healthy
+    # command: ["/usr/local/bin/wait-and-start.sh"]
+    volumes:
+      # Volume para desenvolvimento (opcional - remova em produção)
+      - ../../../src:/app/src:ro
+      #- ../../../package.json:/app/package.json:ro
+      #- ../../../tsconfig.json:/app/tsconfig.json:ro
+      # Volume para logs
+      - app_logs:/app/logs
+    restart: unless-stopped
+    networks:
+      - stockpulse-network
+
+  db:
+    image: postgres:15-alpine
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123
+      POSTGRES_DB: stockpulse
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5555:5432"
+    volumes:
+      - db_data:/var/lib/postgresql/data
+      # Script de inicialização (opcional)
+      # - ./init/init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    networks:
+      - stockpulse-network
+
+  # Serviço opcional para administração do banco
+  adminer:
+    image: adminer:latest
+    environment:
+      ADMINER_DEFAULT_SERVER: db
+    ports:
+      - "8081:8080"
+    depends_on:
+      - db
+    restart: unless-stopped
+    networks:
+      - stockpulse-network
+    profiles:
+      - admin  # Usar com: docker-compose --profile admin up
+
+volumes:
+  db_data:
+    driver: local
+    name: stockpulse_db_data
+  app_logs:
+    driver: local
+    name: stockpulse_app_logs
+
+networks:
+  stockpulse-network:
+    driver: bridge
+    name: stockpulse-network

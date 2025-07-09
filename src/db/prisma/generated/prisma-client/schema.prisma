@@ -1,0 +1,204 @@
+// StockPulse - Sistema de Investimentos
+//
+// schema.prisma
+//
+
+generator client {
+  provider      = "prisma-client-js"
+  output        = "./generated/prisma-client"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum TipoInvestimento {
+  ACAO
+  RENDA_FIXA
+  FUNDO_INVESTIMENTO
+}
+
+model Usuario {
+  id           String        @id @default(uuid())
+  nome         String
+  email        String        @unique
+  senha        String
+  dataCriacao  DateTime      @default(now())
+  ultimoLogin  DateTime?
+  portfolios   Portfolio[]
+  favoritos    Favorito[]
+  notificacoes Notificacao[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([email])
+  @@index([nome])
+}
+
+model Investimento {
+  id        String           @id @default(uuid())
+  nome      String
+  codigo    String           @unique
+  tipo      TipoInvestimento
+  historico Float[]
+
+  // Campos específicos para Ações
+  volatilidade  Float?
+  dividendYield Float?
+
+  // Campos específicos para Renda Fixa
+  taxaJuros      Float?
+  dataVencimento DateTime?
+
+  // Campos específicos para Fundos
+  taxaAdministracao Float?
+  patrimonioTotal   Float?
+
+  portfolioItems PortfolioItem[]
+  favoritos      Favorito[]
+  createdAt      DateTime        @default(now())
+  updatedAt      DateTime        @updatedAt
+
+  @@index([codigo])
+  @@index([tipo])
+  @@index([nome])
+}
+
+model Portfolio {
+  id        String          @id @default(uuid())
+  nome      String
+  descricao String?
+  usuarioId String
+  usuario   Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  itens     PortfolioItem[]
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+
+  @@index([usuarioId])
+  @@index([nome])
+}
+
+model PortfolioItem {
+  id             String       @id @default(uuid())
+  portfolioId    String
+  portfolio      Portfolio    @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  investimentoId String
+  investimento   Investimento @relation(fields: [investimentoId], references: [id], onDelete: Cascade)
+  quantidade     Int
+  precoCompra    Float
+  dataCompra     DateTime     @default(now())
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([portfolioId, investimentoId])
+  @@index([portfolioId])
+  @@index([investimentoId])
+}
+
+model Favorito {
+  id             String       @id @default(uuid())
+  usuarioId      String
+  usuario        Usuario      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  investimentoId String
+  investimento   Investimento @relation(fields: [investimentoId], references: [id], onDelete: Cascade)
+  dataAdicao     DateTime     @default(now())
+  createdAt      DateTime     @default(now())
+
+  @@unique([usuarioId, investimentoId])
+  @@index([usuarioId])
+  @@index([investimentoId])
+}
+
+model Notificacao {
+  id        String   @id @default(uuid())
+  usuarioId String
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  message   String
+  lida      Boolean  @default(false)
+  dataEnvio DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([usuarioId])
+  @@index([lida])
+  @@index([dataEnvio])
+}
+
+model SystemLog {
+  id            String   @id @default(uuid())
+  type          String // 'INFO' | 'ERROR' | 'WARNING'
+  message       String
+  source        String // 'REPOSITORY' | 'SERVICE' | 'CONTROLLER'
+  operation     String? // Nome da operação executada
+  executionTime Float? // Tempo de execução em ms
+  userId        String? // ID do usuário que executou a operação
+  createdAt     DateTime @default(now())
+
+  @@index([type, source])
+  @@index([createdAt])
+}
+
+model MarketData {
+  id        String   @id @default(uuid())
+  codigo    String   @unique
+  preco     Float
+  variacao  Float
+  volume    BigInt
+  dataHora  DateTime @default(now())
+  createdAt DateTime @default(now())
+
+  @@index([codigo])
+  @@index([dataHora])
+}
+
+model Transacao {
+  id             String   @id @default(uuid())
+  portfolioId    String
+  investimentoId String
+  tipo           String // 'COMPRA' | 'VENDA'
+  quantidade     Int
+  preco          Float
+  taxas          Float?   @default(0)
+  dataTransacao  DateTime @default(now())
+  observacoes    String?
+  createdAt      DateTime @default(now())
+
+  @@index([portfolioId])
+  @@index([investimentoId])
+  @@index([tipo])
+  @@index([dataTransacao])
+}
+
+model AlertaPreco {
+  id             String    @id @default(uuid())
+  usuarioId      String
+  investimentoId String
+  precoAlvo      Float
+  condicao       String // 'MAIOR_QUE' | 'MENOR_QUE'
+  ativo          Boolean   @default(true)
+  dataDisparo    DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  @@index([usuarioId])
+  @@index([investimentoId])
+  @@index([ativo])
+}
+
+model RelatorioPerformance {
+  id            String   @id @default(uuid())
+  portfolioId   String
+  periodo       String // 'DIARIO' | 'SEMANAL' | 'MENSAL' | 'ANUAL'
+  valorInicial  Float
+  valorFinal    Float
+  rentabilidade Float
+  benchmark     Float?
+  dataInicio    DateTime
+  dataFim       DateTime
+  createdAt     DateTime @default(now())
+
+  @@index([portfolioId])
+  @@index([periodo])
+  @@index([dataInicio, dataFim])
+}

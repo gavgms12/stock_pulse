@@ -1,0 +1,17 @@
+"use strict";
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.FavoritoController = exports.PrevisaoController = exports.NotificacaoController = exports.PortfolioController = exports.InvestimentoController = exports.UsuarioController = exports.BaseController = void 0;
+var BaseController_1 = require("./BaseController");
+Object.defineProperty(exports, "BaseController", { enumerable: true, get: function () { return BaseController_1.BaseController; } });
+var UsuarioController_1 = require("./UsuarioController");
+Object.defineProperty(exports, "UsuarioController", { enumerable: true, get: function () { return UsuarioController_1.UsuarioController; } });
+var InvestimentoController_1 = require("./InvestimentoController");
+Object.defineProperty(exports, "InvestimentoController", { enumerable: true, get: function () { return InvestimentoController_1.InvestimentoController; } });
+var PortfolioController_1 = require("./PortfolioController");
+Object.defineProperty(exports, "PortfolioController", { enumerable: true, get: function () { return PortfolioController_1.PortfolioController; } });
+var NotificacaoController_1 = require("./NotificacaoController");
+Object.defineProperty(exports, "NotificacaoController", { enumerable: true, get: function () { return NotificacaoController_1.NotificacaoController; } });
+var PrevisaoController_1 = require("./PrevisaoController");
+Object.defineProperty(exports, "PrevisaoController", { enumerable: true, get: function () { return PrevisaoController_1.PrevisaoController; } });
+var FavoritoController_1 = require("./FavoritoController");
+Object.defineProperty(exports, "FavoritoController", { enumerable: true, get: function () { return FavoritoController_1.FavoritoController; } });
